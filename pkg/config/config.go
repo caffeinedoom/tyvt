@@ -42,7 +42,7 @@ func Load(domainsFile, keysFile, outputFile string) (*Config, error) {
 		Domains:          domains,
 		APIKeys:          apiKeys,
 		OutputFile:       outputFile,
-		RotationInterval: 90 * time.Second,
+		RotationInterval: 15 * time.Second,
 		ProxyList:        []string{},
 	}, nil
 }

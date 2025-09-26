@@ -60,13 +60,13 @@ func NewVirusTotalClient(keyRotator *rotator.KeyRotator, ipRotator *rotator.IPRo
 }
 
 func (c *VirusTotalClient) QueryDomain(ctx context.Context, domain string) (*DomainResult, error) {
-	if err := c.rateLimiter.Wait(ctx); err != nil {
-		return nil, fmt.Errorf("rate limiter error: %w", err)
-	}
-
 	apiKey := c.keyRotator.CurrentKey()
 	if apiKey == "" {
 		return nil, fmt.Errorf("no API key available")
+	}
+
+	if err := c.rateLimiter.Wait(ctx, apiKey); err != nil {
+		return nil, fmt.Errorf("rate limiter error: %w", err)
 	}
 
 	reqURL := fmt.Sprintf("%s?apikey=%s&domain=%s", VirusTotalAPIURL, url.QueryEscape(apiKey), url.QueryEscape(domain))

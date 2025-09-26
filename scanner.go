@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"sync"
 
 	"github.com/pluckware/tyvt/internal/client"
 	"github.com/pluckware/tyvt/pkg/config"
@@ -27,67 +26,30 @@ func NewScanner(client *client.VirusTotalClient, fileHandler *files.Handler, cfg
 }
 
 func (s *Scanner) Run(ctx context.Context) error {
-	var wg sync.WaitGroup
-	resultsChan := make(chan *client.DomainResult, len(s.config.Domains))
-	errorsChan := make(chan error, len(s.config.Domains))
-
-	for _, domain := range s.config.Domains {
-		wg.Add(1)
-		go func(domain string) {
-			defer wg.Done()
-
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-
-			result, err := s.client.QueryDomain(ctx, domain)
-			if err != nil {
-				s.logger.Error("Error querying domain %s: %v", domain, err)
-				errorsChan <- err
-				return
-			}
-
-			if result != nil {
-				resultsChan <- result
-			}
-		}(domain)
-	}
-
-	go func() {
-		wg.Wait()
-		close(resultsChan)
-		close(errorsChan)
-	}()
-
 	var results []*client.DomainResult
 	errorCount := 0
 
-	for {
+	s.logger.Info("Processing %d domains sequentially to comply with API rate limits", len(s.config.Domains))
+
+	for i, domain := range s.config.Domains {
 		select {
-		case result, ok := <-resultsChan:
-			if !ok {
-				resultsChan = nil
-				break
-			}
-			results = append(results, result)
-			s.logger.Info("Successfully scanned domain: %s (%d undetected URLs)", result.Domain, len(result.UndetectedURLs))
-
-		case err, ok := <-errorsChan:
-			if !ok {
-				errorsChan = nil
-				break
-			}
-			errorCount++
-			s.logger.Warn("Scan error: %v", err)
-
 		case <-ctx.Done():
 			return ctx.Err()
+		default:
 		}
 
-		if resultsChan == nil && errorsChan == nil {
-			break
+		s.logger.Info("Scanning domain %d/%d: %s", i+1, len(s.config.Domains), domain)
+
+		result, err := s.client.QueryDomain(ctx, domain)
+		if err != nil {
+			s.logger.Error("Error querying domain %s: %v", domain, err)
+			errorCount++
+			continue
+		}
+
+		if result != nil {
+			results = append(results, result)
+			s.logger.Info("Successfully scanned domain: %s (%d undetected URLs)", result.Domain, len(result.UndetectedURLs))
 		}
 	}
 

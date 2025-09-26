@@ -38,8 +38,8 @@ func TestLoad_ValidFiles(t *testing.T) {
 		t.Errorf("Expected %d keys, got %d", len(expectedKeys), len(cfg.APIKeys))
 	}
 
-	if cfg.RotationInterval != 90*time.Second {
-		t.Errorf("Expected 90s rotation interval, got %v", cfg.RotationInterval)
+	if cfg.RotationInterval != 15*time.Second {
+		t.Errorf("Expected 15s rotation interval, got %v", cfg.RotationInterval)
 	}
 }
 

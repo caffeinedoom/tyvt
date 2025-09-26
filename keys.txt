@@ -1,4 +1,3 @@
-# Sample API keys for testing (replace with real keys)
-your_api_key_1_here
-your_api_key_2_here
 c9a9cfea8329cdf114760ed36fc8468dd1a1cb826d4adab9fee96bad9ec74add
+3b3febd37b5f774837bdb9fa4d6cfc78d022ab2f35b1bba18b152d779a77cbb9
+

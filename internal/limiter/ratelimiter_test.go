@@ -9,14 +9,15 @@ import (
 func TestRateLimiter_Wait(t *testing.T) {
 	rl := New(100 * time.Millisecond)
 	ctx := context.Background()
+	testKey := "test-api-key"
 
 	start := time.Now()
 
-	if err := rl.Wait(ctx); err != nil {
+	if err := rl.Wait(ctx, testKey); err != nil {
 		t.Errorf("First wait should not error: %v", err)
 	}
 
-	if err := rl.Wait(ctx); err != nil {
+	if err := rl.Wait(ctx, testKey); err != nil {
 		t.Errorf("Second wait should not error: %v", err)
 	}
 
@@ -29,8 +30,9 @@ func TestRateLimiter_Wait(t *testing.T) {
 func TestRateLimiter_ContextCancellation(t *testing.T) {
 	rl := New(time.Second)
 	ctx, cancel := context.WithCancel(context.Background())
+	testKey := "test-api-key"
 
-	if err := rl.Wait(ctx); err != nil {
+	if err := rl.Wait(ctx, testKey); err != nil {
 		t.Errorf("First wait should not error: %v", err)
 	}
 
@@ -40,7 +42,7 @@ func TestRateLimiter_ContextCancellation(t *testing.T) {
 	}()
 
 	start := time.Now()
-	err := rl.Wait(ctx)
+	err := rl.Wait(ctx, testKey)
 	elapsed := time.Since(start)
 
 	if err != context.Canceled {
@@ -55,9 +57,10 @@ func TestRateLimiter_ContextCancellation(t *testing.T) {
 func TestRateLimiter_RequestCount(t *testing.T) {
 	rl := New(time.Millisecond)
 	ctx := context.Background()
+	testKey := "test-api-key"
 
 	for i := 0; i < 5; i++ {
-		rl.Wait(ctx)
+		rl.Wait(ctx, testKey)
 	}
 
 	if count := rl.GetRequestCount(); count != 5 {
