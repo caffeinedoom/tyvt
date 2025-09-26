@@ -1,0 +1,3 @@
+# Test domains for VirusTotal scanning
+google.com
+github.com
