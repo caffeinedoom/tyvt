@@ -132,7 +132,7 @@ func (c *VirusTotalClient) parseUndetectedURLs(rawResponse map[string]interface{
 
 	for _, item := range undetectedArray {
 		urlData, ok := item.([]interface{})
-		if !ok || len(urlData) < 4 {
+		if !ok || len(urlData) < 5 {
 			continue
 		}
 
@@ -141,17 +141,18 @@ func (c *VirusTotalClient) parseUndetectedURLs(rawResponse map[string]interface{
 			continue
 		}
 
-		positives, ok := urlData[1].(float64)
+		// Skip urlData[1] - it's the SHA256 hash (string)
+		positives, ok := urlData[2].(float64)
 		if !ok {
 			continue
 		}
 
-		total, ok := urlData[2].(float64)
+		total, ok := urlData[3].(float64)
 		if !ok {
 			continue
 		}
 
-		scanDate, ok := urlData[3].(string)
+		scanDate, ok := urlData[4].(string)
 		if !ok {
 			continue
 		}
