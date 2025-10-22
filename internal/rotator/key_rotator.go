@@ -62,12 +62,6 @@ func (kr *KeyRotator) GetKeyCount() int {
 	return len(kr.keys)
 }
 
-func (kr *KeyRotator) GetCurrentIndex() int {
-	kr.mu.RLock()
-	defer kr.mu.RUnlock()
-	return kr.currentIndex
-}
-
 func (kr *KeyRotator) Stop() {
 	kr.mu.Lock()
 	defer kr.mu.Unlock()

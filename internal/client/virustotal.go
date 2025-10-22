@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,7 +22,6 @@ const (
 type VirusTotalClient struct {
 	httpClient  *http.Client
 	keyRotator  *rotator.KeyRotator
-	ipRotator   *rotator.IPRotator
 	rateLimiter *limiter.RateLimiter
 }
 
@@ -41,11 +41,31 @@ type UndetectedURL struct {
 	LastModified time.Time `json:"last_modified"`
 }
 
-func NewVirusTotalClient(keyRotator *rotator.KeyRotator, ipRotator *rotator.IPRotator, rateLimiter *limiter.RateLimiter) *VirusTotalClient {
+// NewVirusTotalClient creates a new VirusTotal API client.
+// proxyURL is optional - pass nil for no proxy.
+// insecureTLS skips certificate verification (use only with trusted proxies that perform TLS inspection).
+//
+// ⚠️  WARNING: Setting insecureTLS=true disables certificate validation!
+// Only use this when:
+//   - Your proxy provider performs TLS inspection (e.g., some residential proxies)
+//   - You trust the proxy provider completely
+//   - You understand the security implications
+//
+// For production, prefer adding the proxy's CA certificate to your system trust store.
+func NewVirusTotalClient(keyRotator *rotator.KeyRotator, rateLimiter *limiter.RateLimiter, proxyURL *url.URL, insecureTLS bool) *VirusTotalClient {
 	transport := &http.Transport{}
 
-	if ipRotator != nil {
-		transport.Proxy = ipRotator.ProxyFunc()
+	// Configure proxy if provided
+	if proxyURL != nil {
+		transport.Proxy = http.ProxyURL(proxyURL)
+	}
+	// Otherwise uses http.ProxyFromEnvironment by default (respects HTTP_PROXY, HTTPS_PROXY env vars)
+
+	// Configure TLS if insecure mode requested
+	if insecureTLS {
+		transport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
 	}
 
 	return &VirusTotalClient{
@@ -54,7 +74,6 @@ func NewVirusTotalClient(keyRotator *rotator.KeyRotator, ipRotator *rotator.IPRo
 			Transport: transport,
 		},
 		keyRotator:  keyRotator,
-		ipRotator:   ipRotator,
 		rateLimiter: rateLimiter,
 	}
 }

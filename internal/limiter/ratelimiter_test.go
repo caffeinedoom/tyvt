@@ -54,22 +54,70 @@ func TestRateLimiter_ContextCancellation(t *testing.T) {
 	}
 }
 
-func TestRateLimiter_RequestCount(t *testing.T) {
+func TestRateLimiter_QuotaTracking(t *testing.T) {
 	rl := New(time.Millisecond)
 	ctx := context.Background()
 	testKey := "test-api-key"
 
+	// Make 5 requests
 	for i := 0; i < 5; i++ {
-		rl.Wait(ctx, testKey)
+		if err := rl.Wait(ctx, testKey); err != nil {
+			t.Errorf("Request %d failed: %v", i+1, err)
+		}
 	}
 
-	if count := rl.GetRequestCount(); count != 5 {
-		t.Errorf("Expected 5 requests, got %d", count)
+	// Check quota status
+	daily, monthly := rl.GetQuotaStatus(testKey)
+	if daily != 5 {
+		t.Errorf("Expected 5 daily requests, got %d", daily)
+	}
+	if monthly != 5 {
+		t.Errorf("Expected 5 monthly requests, got %d", monthly)
 	}
 
+	// Reset and verify
 	rl.Reset()
+	daily, monthly = rl.GetQuotaStatus(testKey)
+	if daily != 0 {
+		t.Errorf("Expected 0 daily requests after reset, got %d", daily)
+	}
+	if monthly != 0 {
+		t.Errorf("Expected 0 monthly requests after reset, got %d", monthly)
+	}
+}
 
-	if count := rl.GetRequestCount(); count != 0 {
-		t.Errorf("Expected 0 requests after reset, got %d", count)
+func TestRateLimiter_DailyQuotaLimit(t *testing.T) {
+	rl := New(time.Millisecond)
+	ctx := context.Background()
+	testKey := "test-api-key"
+
+	// Artificially set quota to near limit
+	rl.Wait(ctx, testKey) // Initialize quota
+	rl.mu.Lock()
+	quota := rl.keyQuotas[testKey]
+	quota.DailyCount = DailyLimit - 1
+	rl.mu.Unlock()
+
+	// This should succeed (at limit)
+	if err := rl.Wait(ctx, testKey); err != nil {
+		t.Errorf("Request at limit should succeed: %v", err)
+	}
+
+	// This should fail (over limit)
+	err := rl.Wait(ctx, testKey)
+	if err == nil {
+		t.Error("Expected error when exceeding daily quota, got nil")
+	}
+	if err != nil && err.Error() != "daily quota exceeded for key (500/day)" {
+		t.Errorf("Expected daily quota error, got: %v", err)
+	}
+}
+
+func TestRateLimiter_GetQuotaStatus_NonexistentKey(t *testing.T) {
+	rl := New(time.Millisecond)
+
+	daily, monthly := rl.GetQuotaStatus("nonexistent-key")
+	if daily != 0 || monthly != 0 {
+		t.Errorf("Expected 0,0 for nonexistent key, got %d,%d", daily, monthly)
 	}
 }

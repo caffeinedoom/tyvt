@@ -39,6 +39,28 @@ build-all:
 	GOOS=darwin GOARCH=amd64 go build -o tyvt-darwin-amd64 .
 	GOOS=windows GOARCH=amd64 go build -o tyvt-windows-amd64.exe .
 
+# Install to /usr/local/bin (requires sudo)
+install: build
+	sudo cp tyvt /usr/local/bin/tyvt
+	sudo chmod +x /usr/local/bin/tyvt
+	@echo "✓ tyvt installed to /usr/local/bin/tyvt"
+	@echo "  You can now run 'tyvt' from anywhere"
+
+# Uninstall from /usr/local/bin
+uninstall:
+	sudo rm -f /usr/local/bin/tyvt
+	@echo "✓ tyvt uninstalled"
+
+# Install to user directory (no sudo required)
+install-user: build
+	mkdir -p $(HOME)/.local/bin
+	cp tyvt $(HOME)/.local/bin/tyvt
+	chmod +x $(HOME)/.local/bin/tyvt
+	@echo "✓ tyvt installed to $(HOME)/.local/bin/tyvt"
+	@echo "  Ensure $(HOME)/.local/bin is in your PATH:"
+	@echo "  echo 'export PATH=\"\$$HOME/.local/bin:\$$PATH\"' >> ~/.zshrc"
+	@echo "  source ~/.zshrc"
+
 # Show help
 help:
 	@echo "Available commands:"
@@ -51,4 +73,7 @@ help:
 	@echo "  fmt          - Format code"
 	@echo "  lint         - Run linter"
 	@echo "  build-all    - Build for multiple platforms"
+	@echo "  install      - Install to /usr/local/bin (requires sudo)"
+	@echo "  uninstall    - Remove from /usr/local/bin"
+	@echo "  install-user - Install to ~/.local/bin (no sudo)"
 	@echo "  help         - Show this help message"

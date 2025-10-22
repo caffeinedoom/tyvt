@@ -1,0 +1,55 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+tyvt
+tyvt-*
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.out
+coverage.html
+
+# Go workspace file
+go.work
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Sensitive data - NEVER commit these!
+*_keys.txt
+api_keys.txt
+*.key
+
+# Domain lists (may contain sensitive targets)
+domains.txt
+*_domains.txt
+
+# Results and outputs
+results.json
+*.json
+output/
+results/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Log files
+*.log
+logs/
+
+# OS generated files
+Thumbs.db
+.Trash-*
